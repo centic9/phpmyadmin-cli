@@ -22,7 +22,7 @@ Requirements
 * Python 2.6+
 * [Requests](http://www.python-requests.org/)
 * [PTable](https://github.com/kxxoling/PTable)
-* [phpMyAdmin](http://www.phpmyadmin.net/) 3.x or 4.x
+* [phpMyAdmin](http://www.phpmyadmin.net/) 3.x, 4.x or 5.x
 
 
 Installation
@@ -32,7 +32,7 @@ On most UNIX-like systems, you can install phpmyadmin-cli by running one of the
 following install commands as root or by using sudo.
 
 ``` sh
-git clone git://github.com/fdev/phpmyadmin-cli.git
+git clone git://github.com/centic9/phpmyadmin-cli.git
 cd phpmyadmin-cli
 python setup.py install
 ```
@@ -40,7 +40,7 @@ python setup.py install
 *or*
 
 ``` sh
-pip install git+http://github.com/fdev/phpmyadmin-cli
+pip install git+http://github.com/centic9/phpmyadmin-cli
 ```
 
 
@@ -56,6 +56,7 @@ Usage: phpmyadmin-cli [OPTIONS] database
   -l, --location=url  Location of phpMyAdmin (http://localhost/phpmyadmin/).
   -p                  Prompt for password to use.
   --password=name     Password to use.
+  --server=n          Server number for login if it isn't 1. (default is 1)
   -s, --ssl-ignore    Ignore bad SSL certificates.
   -t, --timeout=n     Http request timeout in seconds.
   -u, --user=name     User for login if not current user.
@@ -153,8 +154,9 @@ Known limitations
 
 Compatibility
 -------------
-While phpmyadmin-cli should work with phpMyAdmin 3.x and 4.x, it has only been 
-tested with on 3.3.10deb1, 3.4.4, 3.5.8.1deb1 and 4.1.11.
+While phpmyadmin-cli should work with phpMyAdmin 3.x, 4.x or 5.x, it has only been 
+tested with on 3.3.10deb1, 3.4.4, 3.5.8.1deb1, 4.1.11, 4.9.7 and 5.2.1. Only the last
+two versions were used recently.
 
 
 Frequently Asked Questions

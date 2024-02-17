@@ -35,6 +35,7 @@ Usage: phpmyadmin-cli [OPTIONS] database
   -l, --location=url  Location of phpMyAdmin (http://localhost/phpmyadmin/).
   -p                  Prompt for password to use.
   --password=name     Password to use.
+  --server=n          Server number for login if it isn't 1. (default is 1)
   -s, --ssl-ignore    Ignore bad SSL certificates.
   -t, --timeout=n     Http request timeout in seconds.
   -u, --user=name     User for login if not current user.
@@ -49,6 +50,7 @@ Usage: phpmyadmin-cli [OPTIONS] database
 		parser.add_option('-l', '--location', action='store', dest='location', default='http://localhost/phpmyadmin/')
 		parser.add_option('-p', action='store_true', dest='askpass', default=False)
 		parser.add_option('--password', action='store', dest='password', default='')
+		parser.add_option('--server', action='store', type='int', dest='server', default=1)
 		parser.add_option('-s', '--ssl-ignore', action='store_false', dest='verify', default=True)
 		parser.add_option('-t', '--timeout', action='store', type='int', dest='timeout', default=None)
 		parser.add_option('-u', '--user', action='store', dest='user', default=False)
@@ -73,8 +75,10 @@ Usage: phpmyadmin-cli [OPTIONS] database
 		export_all = kwargs.get('export_all')
 		askpass = kwargs.get('askpass')
 		password = kwargs.get('password')
+		server = kwargs.get('server')
 		verify = kwargs.get('verify')
 		timeout = kwargs.get('timeout')
+		is5 = 0
 
 		if user is False:
 			user = os.environ.get('USER', 'root')
@@ -110,7 +114,7 @@ Usage: phpmyadmin-cli [OPTIONS] database
 				data = {
 					'pma_username' : user,
 					'pma_password' : password,
-					'server' : 1,
+					'server' : server,
 					'token' : token,
 				}
 				result = session.post(phpmyadmin, data=data, verify=verify, timeout=timeout)
@@ -125,8 +129,15 @@ Usage: phpmyadmin-cli [OPTIONS] database
 		match_4x = re.search(r'token:"([a-f0-9]{32})"', result.text)
 		if match_3x:
 			token = match_3x.group(1)
+			print('PHPAdmin 3 detected', file=sys.stderr)
 		elif match_4x:
 			token = match_4x.group(1)
+			match_5x = re.search(r'phpMyAdmin 5', result.text)
+			if match_5x:
+				print('PHPAdmin 5 detected', file=sys.stderr)
+				is5 = 1
+			else:
+				print('PHPAdmin 4 detected', file=sys.stderr)
 		else:
 			sys.exit('Unsupported version of phpMyAdmin.')
 
@@ -139,7 +150,12 @@ Usage: phpmyadmin-cli [OPTIONS] database
 				'sql_query' : q,
 			}
 
-			result = session.post(phpmyadmin + 'import.php', data=data, verify=verify, timeout=timeout)
+			if is5 == 1:
+				url = phpmyadmin + 'index.php?route=/import&server=' + str(server)
+				result = session.post(url, data=data, verify=verify, timeout=timeout)
+			else:
+				result = session.post(phpmyadmin + 'import.php', data=data, verify=verify, timeout=timeout)
+
 			match = re.search(r'<div class="(notice|error)">(#\d+.*?)</div>', result.text, re.DOTALL)
 			if match:
 				raise QueryException(match.group(2))
@@ -181,7 +197,12 @@ Usage: phpmyadmin-cli [OPTIONS] database
 				'sql_utc_time' : 'something'
 			}
 
-			result = session.post(phpmyadmin + 'export.php', data=data, verify=verify, timeout=timeout)
+			if is5 == 1:
+				url = phpmyadmin + 'index.php?route=/export&server=' + str(server)
+				result = session.post(url, data=data, verify=verify, timeout=timeout)
+			else:
+				result = session.post(phpmyadmin + 'export.php', data=data, verify=verify, timeout=timeout)
+
 			result.encoding = 'utf-8'
 			if not result:
 				raise QueryException("Unable to export database.")
@@ -197,6 +218,7 @@ Usage: phpmyadmin-cli [OPTIONS] database
 				'single_table' : 'TRUE',
 				'export_type' : 'table',
 				'allrows' : '1',
+				'filename_template': '@DATABASE@',
 				'charset_of_file' : 'utf-8',
 				'compression' : 'none',
 				'what' : 'csv',
@@ -214,7 +236,11 @@ Usage: phpmyadmin-cli [OPTIONS] database
 				'output_format' : 'sendit',
 			}
 
-			result = session.post(phpmyadmin + 'export.php', data=data, verify=verify, timeout=timeout)
+			if is5 == 1:
+				url = phpmyadmin + 'index.php?route=/export&server=' + str(server)
+				result = session.post(url, data=data, verify=verify, timeout=timeout)
+			else:
+				result = session.post(phpmyadmin + 'export.php', data=data, verify=verify, timeout=timeout)
 			result.encoding = 'utf-8'
 			if result and 'text/comma-separated-values' in result.headers['content-type']:
 				# Detect invalid query
