@@ -5,6 +5,7 @@ import re
 import sys
 import csv
 import time
+import traceback
 import requests
 from getpass import getpass
 from optparse import OptionParser
@@ -238,6 +239,8 @@ Usage: phpmyadmin-cli [OPTIONS] database
 
 				print(query_export(export))
 			except QueryException as e:
+				traceback.print_exc()
+
 				sys.exit('ERROR %s' % e)
 			sys.exit()
 
@@ -247,6 +250,8 @@ Usage: phpmyadmin-cli [OPTIONS] database
 			try:
 				query_import(q)
 			except QueryException as e:
+				traceback.print_exc()
+
 				sys.exit('ERROR %s' % e)
 			sys.exit()
 
@@ -255,6 +260,8 @@ Usage: phpmyadmin-cli [OPTIONS] database
 			try:
 				print(query(execute))
 			except QueryException as e:
+				traceback.print_exc()
+
 				sys.exit('ERROR %s' % e)
 			sys.exit()
 
